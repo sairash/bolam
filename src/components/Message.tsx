@@ -22,7 +22,6 @@ export default function Message({ message, timestamp, isSelf, peerId }: { messag
 
 
     useEffect(() => {
-        console.log('activeUsers', 'changing', 'username')
         setUser(activeUsers[peerId] || { username: '', randomString: '' })
     }, [activeUsers, peerId])
 

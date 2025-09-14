@@ -23,6 +23,7 @@ interface PeerState {
   getUsername: (peerId: string) => { username: string, randomString: string }
   sendMessage: (id: string, username: string, message: string, type: MessageType) => void
   addMessage: (message: Message) => void
+  clearMessages: () => void
   destroy: () => void
 }
 
@@ -36,6 +37,7 @@ export const usePeerStore = create<PeerState>()(
     peers: [],
     messages: [],
     activeUsers: {},
+    clearMessages: () => set({ messages: [] }),
     setTotalPeers: () => {
       const { torrent } = get()
       if(!torrent) return
