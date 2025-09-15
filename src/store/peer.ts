@@ -25,6 +25,8 @@ interface PeerState {
   addMessage: (message: Message) => void
   clearMessages: () => void
   destroy: () => void
+
+  sendFile: (id: string, username: string, file: File, type: MessageType) => void
 }
 
 export const usePeerStore = create<PeerState>()(
@@ -69,6 +71,17 @@ export const usePeerStore = create<PeerState>()(
       get().addMessage(message)
     },
 
+    sendFile: (id, username, file, type) => {
+      const {client, peerId, torrent } = get()
+      if (!client || !peerId || !torrent) return
+
+      client.seed(file, (v)=>{
+        console.log('seeded', v.magnetURI)
+        get().sendMessage(id, username, v.magnetURI, type)
+      })
+
+    },
+
     setClient: (client) => set({ client, peerId: client.peerId }),
 
     setTorrent: (torrent) => {
@@ -99,7 +112,7 @@ export const usePeerStore = create<PeerState>()(
     })),
 
     addMessage: async (message: Message) => {
-      const { activeUsers } = get()
+      const { activeUsers, peerId } = get()
 
       const randomString = await deterministicRandomString(message.peerId)
       switch (message.type) {
@@ -112,10 +125,11 @@ export const usePeerStore = create<PeerState>()(
           set({ activeUsers: {...activeUsers} })
           return
         case 'connect':
-
-          if(activeUsers[message.peerId]) {
+          if(activeUsers[message.peerId] || message.peerId == peerId) {
             return
           }
+          break
+        case 'file':
           break
         default:
           break

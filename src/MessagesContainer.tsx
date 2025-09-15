@@ -15,7 +15,7 @@ function MessagesContainer() {
                 <Header />
                 <ScrollArea className="flex-1 h-0 py-4">
                     {messages.map((message, key) => (
-                        <Message key={key} message={message.content} peerId={message.peerId} timestamp={message.timestamp} isSelf={message.peerId == peerId} />
+                        <Message key={key} message={message.content} peerId={message.peerId} timestamp={message.timestamp} isSelf={message.peerId == peerId} msgType={message.type} />
                     ))}
                 </ScrollArea>
                 <SendMessage />

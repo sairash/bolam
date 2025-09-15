@@ -32,6 +32,8 @@ export default function TorrentProvider({ children }: { children: React.ReactNod
             let webTorrentClient = client
             if (!webTorrentClient) {
                 webTorrentClient = new WebTorrent()
+                const controller = await navigator.serviceWorker.ready
+                webTorrentClient.createServer({controller})
                 setClient(webTorrentClient)
             }
 
