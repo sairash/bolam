@@ -3,7 +3,8 @@ import Color from "./Color"
 import moment from "moment"
 import { usePeerStore } from "@/store/peer"
 import { type MessageType } from "@/types/message"
-import WebTorrent from "webtorrent"
+import WebTorrent, { type TorrentFile } from "webtorrent"
+import { Download } from "lucide-react"
 // import { Button } from "./ui/button"
 // import { BsEmojiSurpriseFill } from "react-icons/bs";
 
@@ -16,6 +17,9 @@ export function Msg({ client, msg, type, isSelf }: { client: WebTorrent.Instance
     const setTimeoutRef = useRef<NodeJS.Timeout | null>(null)
     const [progress, setProgress] = useState<number>(0)
     const fileName = useRef<string>('')
+    const [fileType, setFileType] = useState<string>('')
+    const [file, setFile] = useState<TorrentFile | null>(null)
+    const [blob, setBlob] = useState<Blob | null>(null)
 
     useEffect(() => {
         if (type === 'file') {
@@ -25,20 +29,16 @@ export function Msg({ client, msg, type, isSelf }: { client: WebTorrent.Instance
                 if (torrent.files.length > 0) {
                     const file = torrent.files[0]
                     fileName.current = file.name
-                    setTimeoutRef.current = setTimeout(() => {
+                    setFileType(file.type.split('/')[0])
+                    setFile(file)
+
+                    setTimeoutRef.current = setInterval(() => {
                         if (file.progress == 1 && setTimeoutRef.current) {
                             setProgress(file.progress * 100)
-                            clearTimeout(setTimeoutRef.current)
+                            clearInterval(setTimeoutRef.current)
                         }
                         setProgress(file.progress * 100)
-                        console.log('progress', progress)
                     }, 100)
-
-                    file.streamTo(fileContainer.current)
-                    
-                    const blob = await file.blob()
-                    console.log('blob', blob)
-
                 }
             })
 
@@ -51,6 +51,24 @@ export function Msg({ client, msg, type, isSelf }: { client: WebTorrent.Instance
         }
     }, [msg, type, setTimeoutRef])
 
+    useEffect(() => {
+        if (file) {
+            if (fileType === 'application') {
+                
+                const blob = async () => {
+                    const blob = await file.blob()
+                    setBlob(blob)
+                }
+
+                blob()
+                return
+            }
+            file.streamTo(fileContainer.current)
+        }
+    }, [fileType])
+
+
+
     const progressText = isSelf ? 'Sending' : 'Receiving'
     const receivedText = isSelf ? 'Sent' : 'Received'
 
@@ -59,8 +77,16 @@ export function Msg({ client, msg, type, isSelf }: { client: WebTorrent.Instance
             <div className="progress-bar-value"></div>
         </div>}
         <div>
-            <img className="w-full max-w-74" src={msg} ref={fileContainer as RefObject<HTMLImageElement>} />
-            <span className="text-sm text-muted-foreground">{progress < 100 ? progressText : receivedText} image: {`${fileName.current}`} {`[${progress}%]`}</span>
+            {fileType === 'image' && <img className="w-full max-w-74" src={msg} ref={fileContainer as RefObject<HTMLImageElement>} />}
+            {fileType === 'video' && <video controls className="w-full max-w-74" src={msg} ref={fileContainer as RefObject<HTMLVideoElement>} />}
+            {fileType === 'audio' && <audio controls className="w-full max-w-74" src={msg} ref={fileContainer as RefObject<HTMLAudioElement>} />}
+            {fileType === 'application' && blob && (
+                <div className="flex items-center gap-2">
+                    <span>{fileName.current}</span>
+                    <a href={URL.createObjectURL(blob)} download={fileName.current} className="flex gap-1 text-popover-foreground">[ Download <Download size={18} />]</a>
+                </div>
+            )}
+            <span className="text-sm text-muted-foreground">{progress < 100 ? progressText : receivedText} {fileType}: {`${fileName.current}`} {`[${progress}%]`}</span>
         </div>
     </div>
     return <span className="pr-2">{msg}</span>

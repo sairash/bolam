@@ -12,27 +12,12 @@ function DialogUpload() {
     const username = usePersistStore((state) => state.username);
     const [isUploadOpen, setIsUploadOpen] = useState(false);
 
-    const { acceptedFiles, getRootProps, getInputProps } = useDropzone({
+    const { acceptedFiles, getRootProps, getInputProps, fileRejections } = useDropzone({
         accept: {
-            'image/jpeg': [],
-            'image/png': [],
-            'image/jpg': [],
-            'image/gif': [],
-            'image/webp': [],
-            'image/svg': [],
-            'image/bmp': [],
-            'image/tiff': [],
-            'image/ico': [],
-            // 'video/mp4': [],
-            // 'video/mov': [],
-            // 'video/avi': [],
-            // 'audio/mp3': [],
-            // 'audio/wav': [],
-            // 'audio/ogg': [],
-            // 'application/pdf': [],
-            // 'application/doc': [],
-            // 'application/docx': [],
-            // 'application/txt': [],
+            'image/*': [],
+            'video/*': [],
+            'audio/*': [],
+            'application/*': [],
         },
         maxFiles: 1,
         multiple: false,
@@ -52,9 +37,15 @@ function DialogUpload() {
             <img className="h-20" src={URL.createObjectURL(file)} alt={file.name} />
         ) : (
             <div key={file.path}>
-                {file.path} - {file.size} bytes
+                {file.path}- {file.type} - {file.size} bytes
             </div>
         )
+    ));
+
+    const fileRejectionsList = fileRejections.map((fileRejection) => (
+        <div key={fileRejection.file.path}>
+            {fileRejection.file.name} - {fileRejection.file.type} - {fileRejection.errors[0].code}
+        </div>
     ));
 
     return (
@@ -78,6 +69,7 @@ function DialogUpload() {
                         <h4>Files</h4>
                         {files}
                     </aside>
+                    {fileRejectionsList}
                 </section>
                 <DialogFooter>
                     <Button type="submit" variant="secondary" className="cursor-pointer" onClick={handleSendFile}>
