@@ -1,7 +1,7 @@
 import { usePeerStore } from "@/store/peer";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { SendHorizonal, Upload } from "lucide-react";
+import { ArrowDown, ArrowUp, SendHorizonal, Upload } from "lucide-react";
 import { useState, useCallback } from "react";
 import { usePersistStore } from "@/store/persist";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
@@ -40,10 +40,12 @@ function DialogUpload() {
 
 
     const handleSendFile = useCallback(() => {
-        if (acceptedFiles.length > 0) {
+        if (acceptedFiles.length > 0 && acceptedFiles[0]) {
             sendFile(crypto.randomUUID(), username, acceptedFiles[0], 'file')
         }
-    }, [acceptedFiles, sendFile, username])
+        setIsUploadOpen(false)
+        
+    }, [acceptedFiles, sendFile, username, setIsUploadOpen])
 
     const files = acceptedFiles.map(file => (
         file.type.startsWith('image/') ? (
@@ -96,6 +98,7 @@ function DialogUpload() {
 
 
 export default function Message() {
+    const client = usePeerStore((state) => state.client);
     const [message, setMessage] = useState('');
     const peerId = usePeerStore((state) => state.peerId);
     const sendMessage = usePeerStore((state) => state.sendMessage);
@@ -124,7 +127,12 @@ export default function Message() {
     }, [message, peerId, sendMessage, username])
     return (
         <>
-            <div className="flex gap-2">
+        
+            <div className="flex gap-2 relative">
+                <div className="absolute right-0 -top-5 text-muted-foreground text-xs flex gap-2">
+                    {client && <div className="flex items-center gap-1">{Math.trunc(client.downloadSpeed)} KB/s <ArrowDown size={12} /></div>}
+                    {client && <div className="flex items-center gap-1">{Math.trunc(client.uploadSpeed)} KB/s <ArrowUp size={12} /></div>}
+                </div>
                 <Input placeholder="Message... or /help" value={message} onChange={handleChange} onKeyDown={handleKeyDown} />
                 {/* {Upload Dialog} */}
                 <DialogUpload />

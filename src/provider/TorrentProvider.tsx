@@ -19,7 +19,7 @@ export default function TorrentProvider({ children }: { children: React.ReactNod
     const geoHash = usePersistStore((state) => state.geoHash)
     const torrentTrackers = usePersistStore((state) => state.torrentTrackers)
     const clearMessages = usePeerStore((state) => state.clearMessages)
-    
+
     const isInitializing = useRef(false)
     const currentRoomName = useRef('')
 
@@ -33,12 +33,12 @@ export default function TorrentProvider({ children }: { children: React.ReactNod
             if (!webTorrentClient) {
                 webTorrentClient = new WebTorrent()
                 const controller = await navigator.serviceWorker.ready
-                webTorrentClient.createServer({controller})
+                webTorrentClient.createServer({ controller })
                 setClient(webTorrentClient)
             }
 
             const infoHash = await generateInfoHash(geoHash)
-            
+
             webTorrentClient.on('error', (err) => {
                 console.log(`❌ Client error: ${err}`)
                 isInitializing.current = false
@@ -49,7 +49,7 @@ export default function TorrentProvider({ children }: { children: React.ReactNod
                     ...torrentTrackers,
                 ]
             });
-            
+
             newTorrent.on('infoHash', () => {
                 console.log('✅ Torrent added. Waiting for peers...');
                 setTorrent(newTorrent)
@@ -62,18 +62,18 @@ export default function TorrentProvider({ children }: { children: React.ReactNod
                 wire.use(chatExtensionMaker());
 
                 wire.on('extended', (extendedData) => {
-                    if(extendedData === 'handshake') {
+                    if (extendedData === 'handshake') {
                         const id = crypto.randomUUID();
                         sendMessage(id, username, 'Peer has connected with you', 'connect')
                     }
                 });
-                
+
                 wire.on('close', () => {
                     setTotalPeers()
                     removePeer(wire.peerId)
                     console.log('Peer disconnected:', wire.peerId);
                 });
-                
+
                 wire.on('end', () => {
                     setTotalPeers()
                     removePeer(wire.peerId)
@@ -93,18 +93,18 @@ export default function TorrentProvider({ children }: { children: React.ReactNod
     }
 
     async function removeTorrentFromClient(geoHash: string) {
-        if(geoHash === '') return
-        const infoHash = await generateInfoHash(geoHash)
+        if (geoHash === '') return
 
-        
         const webTorrentClient = client
         if (!webTorrentClient) return
-        webTorrentClient.remove(infoHash, {}, async (torrent) => {
-            isInitializing.current = false
-            joinRoom()
-            console.log('Torrent removed from client:', torrent)
-            
-        })
+        for (const torrent of webTorrentClient.torrents) {
+            webTorrentClient.remove(torrent.infoHash, {}, async (torrent) => {
+                isInitializing.current = false
+                joinRoom()
+                console.log('Torrent removed from client:', torrent)
+            })
+        }
+        console.log('Removing torrent from client:',)
     }
 
     useEffect(() => {
@@ -118,7 +118,7 @@ export default function TorrentProvider({ children }: { children: React.ReactNod
 
         return () => {
             if (currentRoomName.current !== geoHash) return
-            
+
             isInitializing.current = false
         }
     }, [geoHash, torrentTrackers]) // Only depend on geoHash and torrentTrackers

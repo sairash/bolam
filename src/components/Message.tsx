@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type RefObject } from "react"
+import { useEffect, useRef, useState, type RefObject } from "react"
 import Color from "./Color"
 import moment from "moment"
 import { usePeerStore } from "@/store/peer"
@@ -11,24 +11,58 @@ import WebTorrent from "webtorrent"
 // import { Award, Cat } from "lucide-react";
 
 
-export function Msg({ client, msg, type }: { client: WebTorrent.Instance | null, msg: string, type: MessageType }) {
+export function Msg({ client, msg, type, isSelf }: { client: WebTorrent.Instance | null, msg: string, type: MessageType, isSelf: boolean }) {
     const fileContainer = useRef<HTMLElement | HTMLImageElement | null>(null)
+    const setTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+    const [progress, setProgress] = useState<number>(0)
+    const fileName = useRef<string>('')
 
     useEffect(() => {
         if (type === 'file') {
-            if (!client) return
+            if (!client || setTimeoutRef.current) return
 
-            client.add(msg, (torrent) => {
+            client.add(msg, async (torrent) => {
                 if (torrent.files.length > 0) {
                     const file = torrent.files[0]
+                    fileName.current = file.name
+                    setTimeoutRef.current = setTimeout(() => {
+                        if (file.progress == 1 && setTimeoutRef.current) {
+                            setProgress(file.progress * 100)
+                            clearTimeout(setTimeoutRef.current)
+                        }
+                        setProgress(file.progress * 100)
+                        console.log('progress', progress)
+                    }, 100)
+
                     file.streamTo(fileContainer.current)
+                    
+                    const blob = await file.blob()
+                    console.log('blob', blob)
+
                 }
             })
 
         }
-    }, [msg, type])
 
-    if(type === 'file') return <img className="w-full max-w-74" src={msg} ref={fileContainer as RefObject<HTMLImageElement>} />
+        return () => {
+            if (setTimeoutRef.current) {
+                clearTimeout(setTimeoutRef.current)
+            }
+        }
+    }, [msg, type, setTimeoutRef])
+
+    const progressText = isSelf ? 'Sending' : 'Receiving'
+    const receivedText = isSelf ? 'Sent' : 'Received'
+
+    if (type === 'file') return <div>
+        {progress < 100 && <div className="progress-bar">
+            <div className="progress-bar-value"></div>
+        </div>}
+        <div>
+            <img className="w-full max-w-74" src={msg} ref={fileContainer as RefObject<HTMLImageElement>} />
+            <span className="text-sm text-muted-foreground">{progress < 100 ? progressText : receivedText} image: {`${fileName.current}`} {`[${progress}%]`}</span>
+        </div>
+    </div>
     return <span className="pr-2">{msg}</span>
 }
 
@@ -58,7 +92,7 @@ export default function Message({ message, timestamp, isSelf, peerId, msgType }:
                 <div className="">
                     <Color name={`@${user.username}#${user.randomString}`}>
                         <span className="font-bold pr-2">{`<${user.username}#${user.randomString}>`}</span>
-                        <Msg client={client} msg={message} type={msgType} />
+                        <Msg client={client} msg={message} type={msgType} isSelf={isSelf} />
                         <span className="text-sm text-muted-foreground">{`[${formattedTimestamp}]`}</span>
                     </Color>
                 </div>
