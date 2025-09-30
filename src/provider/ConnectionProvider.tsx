@@ -1,34 +1,57 @@
 import { ConnectionContext } from "@/context/ConnectionContext";
 import { useState, useEffect } from "react";
+import { type ConnectionStatus } from "@/types/connection";
+
 
 export default function ConnectionProvider({ children }: { children: React.ReactNode }) {
-    const [connection, setConnection] = useState(navigator.onLine)
+    const [connection, setConnection] = useState<ConnectionStatus>(navigator.onLine ? 'online' : 'offline')
+    const [previousConnection, setPreviousConnection] = useState<ConnectionStatus>(navigator.onLine ? 'online' : 'offline')
 
     useEffect(() => {
         window.addEventListener('online', () => {
-            setConnection(true)
+            setConnection('online')
         })
         window.addEventListener('offline', () => {
-            setConnection(false)
+            setConnection('offline')
         })
 
         return () => {
             window.removeEventListener('online', () => {
-                setConnection(true)
+                setConnection('online')
             })
             window.removeEventListener('offline', () => {
-                setConnection(false)
+                setConnection('offline')
             })
         }
     }, [])
 
+
+    useEffect(() => {
+        if (connection === 'online' && previousConnection !== connection) {
+            setConnection('connecting')
+
+            setTimeout(() => {
+                setConnection('online')
+                setPreviousConnection('online')
+            }, 3000)
+        }
+        setPreviousConnection(connection)
+
+    }, [connection])
+
     return (
         <ConnectionContext.Provider value={connection}>
-            {!connection && (
+            {connection === 'offline' && (
                 <div className="w-full bg-destructive text-destructive-foreground text-xs text-center">
                     No connection
                 </div>
             )}
+            {connection === 'connecting' && (
+                <div className="w-full bg-primary text-primary-foreground text-xs text-center">
+                    Connecting...
+                </div>
+            )}
+
             {children}
         </ConnectionContext.Provider>
     )
