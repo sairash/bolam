@@ -47,7 +47,7 @@ export default function TorrentProvider({ children }: { children: React.ReactNod
             const newTorrent = webTorrentClient.add(infoHash, {
                 announce: [
                     ...torrentTrackers,
-                ]
+                ],
             });
 
             newTorrent.on('infoHash', () => {
