@@ -28,6 +28,7 @@ export default function TorrentProvider({ children }: { children: React.ReactNod
 
         isInitializing.current = true
         clearMessages()
+
         try {
             let webTorrentClient = client
             if (!webTorrentClient) {
@@ -48,6 +49,7 @@ export default function TorrentProvider({ children }: { children: React.ReactNod
                 announce: [
                     ...torrentTrackers,
                 ],
+                maxWebConns: 2,
             });
 
             newTorrent.on('infoHash', () => {

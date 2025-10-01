@@ -22,6 +22,7 @@ interface PeerState {
   removePeer: (peerId: string) => void
   getUsername: (peerId: string) => { username: string, randomString: string }
   sendMessage: (id: string, username: string, message: string, type: MessageType) => void
+  relayMessage: (message: Message) => void
   addMessage: (message: Message) => void
   clearMessages: () => void
   destroy: () => void
@@ -70,6 +71,15 @@ export const usePeerStore = create<PeerState>()(
 
       get().addMessage(message)
     },
+    relayMessage: (message: Message) => {
+      const { torrent } = get()
+      if (!torrent) return
+
+      const payload = JSON.stringify(message);
+      for (const wire of torrent.wires) {
+        wire.torrentChat.send(payload);
+      }
+    },
 
     sendFile: (id, username, file, type) => {
       const {client, peerId, torrent } = get()
@@ -112,7 +122,9 @@ export const usePeerStore = create<PeerState>()(
     })),
 
     addMessage: async (message: Message) => {
-      const { activeUsers, peerId } = get()
+      const { messages,activeUsers, peerId } = get()
+
+      if(messages.find(m => m.id === message.id)) return
 
       const randomString = await deterministicRandomString(message.peerId)
       switch (message.type) {
@@ -144,6 +156,8 @@ export const usePeerStore = create<PeerState>()(
       set((state) => ({
         messages: [...state.messages, message],
       }))
+
+      get().relayMessage(message)
     },
 
     destroy: () => {
