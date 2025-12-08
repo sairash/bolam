@@ -43,7 +43,7 @@ export const usePeerStore = create<PeerState>()(
     clearMessages: () => set({ messages: [] }),
     setTotalPeers: () => {
       const { torrent } = get()
-      if(!torrent) return
+      if (!torrent) return
       set({ totalPeers: torrent.numPeers + 1 })
     },
     getUsername: (peerId) => {
@@ -74,18 +74,19 @@ export const usePeerStore = create<PeerState>()(
     relayMessage: (message: Message) => {
       const { torrent } = get()
       if (!torrent) return
+      const realyMessage: Message = { ...message, type: 'relay', content: message }
 
-      const payload = JSON.stringify(message);
+      const payload = JSON.stringify(realyMessage);
       for (const wire of torrent.wires) {
         wire.torrentChat.send(payload);
       }
     },
 
     sendFile: (id, username, file, type) => {
-      const {client, peerId, torrent } = get()
+      const { client, peerId, torrent } = get()
       if (!client || !peerId || !torrent) return
 
-      client.seed(file, (v)=>{
+      client.seed(file, (v) => {
         console.log('seeded', v.magnetURI)
         get().sendMessage(id, username, v.magnetURI, type)
       })
@@ -122,27 +123,31 @@ export const usePeerStore = create<PeerState>()(
     })),
 
     addMessage: async (message: Message) => {
-      const { messages,activeUsers, peerId } = get()
+      const { messages, activeUsers, peerId } = get()
 
-      if(messages.find(m => m.id === message.id)) return
+      if (messages.find(m => m.id === message.id)) return
 
       const randomString = await deterministicRandomString(message.peerId)
       switch (message.type) {
+        case 'relay':
+
+          return;
         case 'update-username':
           activeUsers[message.peerId] = { username: message.username, randomString: randomString }
-          set({ activeUsers: {...activeUsers} })
+          set({ activeUsers: { ...activeUsers } })
           return
         case 'disconnect':
           delete activeUsers[message.peerId]
-          set({ activeUsers: {...activeUsers} })
+          set({ activeUsers: { ...activeUsers } })
           return
         case 'connect':
-          if(activeUsers[message.peerId] || message.peerId == peerId) {
+          if (activeUsers[message.peerId] || message.peerId == peerId) {
             return
           }
           break
         case 'file':
           break
+
         default:
           break
       }

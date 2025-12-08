@@ -36,6 +36,7 @@ import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Label } from '@radix-ui/react-label'
 import { Trash, Plus, BadgeQuestionMark } from 'lucide-react'
+import { isValidGeohash } from '@/helper/helpers'
 
 export default function Header() {
   const activePeers = usePeerStore((state) => state.peers)
@@ -158,7 +159,7 @@ export default function Header() {
             />
             <Button variant="outline" style={{ backgroundColor: stringToHexColor(`@${usernameChanging}#${generatedUsername}`) }}>#{generatedUsername}</Button>
             <div>
-              <Button variant="secondary">{usernameChanging.length} / {MAX_USERNAME_LENGTH}</Button>
+              <Button variant="secondary">{usernameChanging.length} / {MAX_USERNAME_LENGTH}</Button>z
             </div>
           </div>
           <DialogFooter>
@@ -171,22 +172,26 @@ export default function Header() {
       <Dialog onOpenChange={() => { setIsChangeGeoHashOpen(!isChangeGeoHashOpen) }} open={isChangeGeoHashOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>#Location Channels</DialogTitle>
+            <DialogTitle>#Location Channels {isValidGeohash(selectedGeoHash) ? "True" : "False"} </DialogTitle>
+
             <DialogDescription> Chat with people in the same location using geohash channels. Only a coarse level of precision is used. Do not share or screenshot this to protect your privacy. </DialogDescription>
           </DialogHeader>
+
           <div className="flex items-center gap-2">
-            <Select defaultValue={selectedGeoHash} onValueChange={(value) => setSelectedGeoHash(value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Location" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableGeoHashes.map((char, index) => (
-                  <SelectItem value={char} key={index} disabled={char === selectedGeoHash}>
-                    {char} - <span className='text-sm text-muted-foreground'>{GEOHASH_COVERS[index]}</span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {isValidGeohash(selectedGeoHash) &&
+              <Select defaultValue={selectedGeoHash} onValueChange={(value) => setSelectedGeoHash(value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Location" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableGeoHashes.map((char, index) => (
+                    <SelectItem value={char} key={index} disabled={char === selectedGeoHash}>
+                      {char} - <span className='text-sm text-muted-foreground'>{GEOHASH_COVERS[index]}</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            }
             <Input type="text" placeholder="Custom Channel" defaultValue={geoHash} onChange={(e) => setCustomChannel(e.target.value)} />
           </div>
           <Button variant="secondary" className='cursor-pointer' onClick={handleGeoHashChange}>Change</Button>
@@ -248,7 +253,7 @@ export default function Header() {
               <Button variant="secondary" className='cursor-pointer' onClick={() => { addTorrentTracker(torrentTracker); setTorrentTracker('') }}><Plus className='size-4' /></Button>
             </div>
             <div className="">
-            <Button variant="destructive" className='cursor-pointer w-full' onClick={() => { purge() }}>Purge All Data</Button>
+              <Button variant="destructive" className='cursor-pointer w-full' onClick={() => { purge() }}>Purge All Data</Button>
             </div>
           </DialogFooter>
         </DialogContent>

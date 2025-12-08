@@ -27,7 +27,7 @@ function chatExtensionMaker(): unknown {
       if (startIndex !== -1) {
         str = str.slice(startIndex);
       }
-
+      
       const data = JSON.parse(JSON.parse(str));
 
       const parsedData = messageSchema.parse(data);

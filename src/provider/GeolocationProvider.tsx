@@ -1,7 +1,8 @@
 import { GeolocationContext } from '@/context/GeolocationContext'
 import { useState, useEffect } from 'react'
 import { useGeolocated } from "react-geolocated";
-import geohash from 'ngeohash'
+import * as geokit from 'geokit';
+
 import {
     AlertDialog,
     AlertDialogAction,
@@ -14,8 +15,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { usePersistStore } from '@/store/persist'
-import { LuGithub } from 'react-icons/lu';
-import { AlertDialogCancel } from '@radix-ui/react-alert-dialog';
+import { InfoModal } from '@/components/infoModal';
 
 export default function GeolocationProvider({ children }: { children: React.ReactNode }) {
     const [enterCustomChannel, setEnterCustomChannel] = useState(false)
@@ -24,7 +24,7 @@ export default function GeolocationProvider({ children }: { children: React.Reac
     const [customChannel, setCustomChannel] = useState('')
     const setWelcomeMessageShown = usePersistStore((state) => state.setWelcomeMessageShown)
     const welcomeMessageShown = usePersistStore((state) => state.welcomeMessageShown)
-    
+
     const { coords, isGeolocationAvailable, isGeolocationEnabled } =
         useGeolocated({
             positionOptions: {
@@ -35,38 +35,17 @@ export default function GeolocationProvider({ children }: { children: React.Reac
 
     useEffect(() => {
         if (coords) {
-            const geoHash = geohash.encode(coords.latitude, coords.longitude, 6)
+            const geoHash = geokit.hash({
+                lat: coords.latitude,
+                lng: coords.longitude
+            }, 6)
             setGeoHash(geoHash)
         }
     }, [coords, setGeoHash])
 
 
     return !welcomeMessageShown ? (
-        <AlertDialog open={true}>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                    <AlertDialogTitle>Bolam: बोलम <span className='text-sm'>(Nepali word for "let's talk")</span></AlertDialogTitle>
-                    <AlertDialogDescription>
-                        <img src="/bolam-logo.svg" alt="Bolam Logo" width={100} height={100} className='mb-4' />
-                        <div>
-                            Bolam is a decentralized peer-to-peer chat app that lets you connect directly with others without relying on central servers or storing any data. 
-                            You can join channels to chat with people worldwide or enable location access to discover and talk with users nearby. 
-                            All data, including your location, stays only in your browser, ensuring privacy. 
-                            Built on torrent technology, Bolam bypasses censorship while giving you full control to easily add or remove trackers, making your conversations private, resilient, and truly yours.
-                        </div>
-                    </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                    <AlertDialogCancel className='cursor-pointer' asChild>
-                    <a href="https://github.com/sairash/bolam" target="_blank" rel="noopener noreferrer" className='flex items-center gap-2'>
-                            <LuGithub className='size-5' />
-                            <span>GitHub</span>
-                        </a>
-                    </AlertDialogCancel>
-                    <AlertDialogAction onClick={() => setWelcomeMessageShown(true)}>Next</AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
+        <InfoModal closeText='Next' close={() => setWelcomeMessageShown(true)} />
     ) : geohash_persist !== '' ? (
         <GeolocationContext.Provider value={geohash_persist}>
             {children}

@@ -1,9 +1,8 @@
-import { ConnectionContext } from "@/context/ConnectionContext";
 import { useState, useEffect } from "react";
 import { type ConnectionStatus } from "@/types/connection";
 
 
-export default function ConnectionProvider({ children }: { children: React.ReactNode }) {
+export default function Connection() {
     const [connection, setConnection] = useState<ConnectionStatus>(navigator.onLine ? 'online' : 'offline')
     const [previousConnection, setPreviousConnection] = useState<ConnectionStatus>(navigator.onLine ? 'online' : 'offline')
 
@@ -40,7 +39,7 @@ export default function ConnectionProvider({ children }: { children: React.React
     }, [connection])
 
     return (
-        <ConnectionContext.Provider value={connection}>
+        <>
             {connection === 'offline' && (
                 <div className="w-full bg-destructive text-destructive-foreground text-xs text-center">
                     No connection
@@ -51,8 +50,7 @@ export default function ConnectionProvider({ children }: { children: React.React
                     Connecting...
                 </div>
             )}
+        </>
 
-            {children}
-        </ConnectionContext.Provider>
     )
 }
