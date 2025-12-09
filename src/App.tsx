@@ -1,11 +1,12 @@
 import { NavLink } from "react-router";
 import { ScrollArea } from "./components/ui/scroll-area";
 import Color from "./components/Color";
-import { BadgeInfo, MapPin } from "lucide-react"
+import { BadgeInfo, MapPin, MessageCirclePlusIcon } from "lucide-react"
 import { Button } from "./components/ui/button";
 import { useState } from "react";
 import { generateRandomString } from "./helper/usernameGen";
 import { InfoModal } from "./components/infoModal";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 // import happyGif from "@/assets/happy.gif"
 import lolGif from "@/assets/lol.gif"
 
@@ -21,7 +22,7 @@ function App() {
     <>
       <div className="flex flex-col h-screen w-screen p-2 overflow-hidden">
         <div className="flex justify-between">
-          <div className="text-base font-medium">
+          <div className="text-base font-medium select-none">
             <Button variant="ghost" asChild size="default" className='cursor-pointer px-1' onClick={() => generateNew()}>
               <span>
                 Bolam /
@@ -30,6 +31,19 @@ function App() {
             </Button>
           </div>
           <div className="">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" asChild size="default" className='cursor-pointer px-1' onClick={() => setIsOpenInfo(true)}>
+                  <span>
+                    <MessageCirclePlusIcon />
+                  </span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Add Channel</p>
+              </TooltipContent>
+            </Tooltip>
+
             <Button variant="ghost" asChild size="default" className='cursor-pointer px-1' onClick={() => setIsOpenInfo(true)}>
               <span>
                 <BadgeInfo />
@@ -41,9 +55,9 @@ function App() {
           <NavLink to="/chat/location">
             <div className="w-full border p-2 py-6 flex gap-2 hover:bg-secondary"><span>Go to Location Chat</span> <MapPin className="mt-0.5" size={18} /></div>
           </NavLink>
-            <div className="w-full border border-dashed p-2 py-6 flex gap-2 hover:bg-secondary h-64 mt-2 flex justify-center items-center">
-              Other Features comming soon! <img className="h-16 mb-5" src={lolGif} />
-            </div>
+          <div className="w-full border border-dashed p-2 py-6 flex gap-2 hover:bg-secondary h-64 mt-2 flex justify-center items-center">
+            Other Features comming soon! <img className="h-16 mb-5" src={lolGif} />
+          </div>
         </ScrollArea>
       </div>
       {isOpenInfo && <InfoModal closeText="Close" close={() => setIsOpenInfo(false)} />}

@@ -27,6 +27,7 @@ import {
   HoverCardContent,
   HoverCardTrigger,
 } from "@/components/ui/hover-card"
+import { NavLink } from 'react-router'
 
 import { Input } from './ui/input'
 import { stringToHexColor } from '@/helper/color'
@@ -35,7 +36,7 @@ import { usePersistStore } from '@/store/persist'
 import { Separator } from '@/components/ui/separator'
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Label } from '@radix-ui/react-label'
-import { Trash, Plus, BadgeQuestionMark } from 'lucide-react'
+import { Trash, Plus, BadgeQuestionMark, ArrowLeft } from 'lucide-react'
 import { isValidGeohash } from '@/helper/helpers'
 
 export default function Header() {
@@ -106,7 +107,12 @@ export default function Header() {
   return (
     <>
       <header className="flex shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
-        <div className="flex w-full items-center gap-1">
+        <div className="flex w-full items-center gap-2">
+          <NavLink to="/" end>
+            <Button variant="ghost" asChild size="default" className='cursor-pointer px-1' >
+              <ArrowLeft size={30} />
+            </Button>
+          </NavLink>
           <h1 className="text-base font-medium cursor-default">Bolam /
             <Button variant="ghost" asChild size="default" className='cursor-pointer px-1' onClick={() => setIsChangeUsernameOpen(true)}>
               <span>
@@ -159,7 +165,7 @@ export default function Header() {
             />
             <Button variant="outline" style={{ backgroundColor: stringToHexColor(`@${usernameChanging}#${generatedUsername}`) }}>#{generatedUsername}</Button>
             <div>
-              <Button variant="secondary">{usernameChanging.length} / {MAX_USERNAME_LENGTH}</Button>z
+              <Button variant="secondary">{usernameChanging.length} / {MAX_USERNAME_LENGTH}</Button>
             </div>
           </div>
           <DialogFooter>
