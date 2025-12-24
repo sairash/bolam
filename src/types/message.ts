@@ -15,9 +15,7 @@ const BaseMessageZSchema = z.object({
     peerId: z.string(),
     timestamp: z.string(),
     username: z.string(),
-    content: z.string(),
 });
-
 
 const stringContentSchema = BaseMessageZSchema.extend({
     type: z.enum(["chat", "file", "connect", "disconnect", "update-username"]),
@@ -29,11 +27,19 @@ const peerListSchema = BaseMessageZSchema.extend({
     content: z.array(z.string()),
 });
 
+type StringContentMessage = z.infer<typeof stringContentSchema>;
+type PeerListMessage = z.infer<typeof peerListSchema>;
 
-export type Message =
-    | z.infer<typeof stringContentSchema>
-    | z.infer<typeof peerListSchema>
-    | { type: "relay"; content: Message };
+type RelayMessage = {
+    id: string;
+    peerId: string;
+    timestamp: string;
+    username: string;
+    type: "relay";
+    content: Message;
+};
+
+export type Message = StringContentMessage | PeerListMessage | RelayMessage;
 
 export const messageSchema: z.ZodType<Message> = z.discriminatedUnion("type", [
     stringContentSchema,

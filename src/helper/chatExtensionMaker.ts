@@ -1,13 +1,14 @@
 import { messageSchema, type Message } from '@/types/message'
 import { CHAT_EXTENSION_NAME } from './constants'
 import { usePeerStore } from '@/store/peer'
+import type { Wire, ExtensionConstructor } from 'bittorrent-protocol'
 
 
-function chatExtensionMaker(): unknown {
+function chatExtensionMaker(): ExtensionConstructor {
   const chatExtension = class ChatExtension {
-    private _wire: unknown;
+    private _wire: Wire;
     public name: string;
-    constructor(wire: unknown) {
+    constructor(wire: Wire) {
       this._wire = wire;
       this.name = CHAT_EXTENSION_NAME;
     }
@@ -41,7 +42,7 @@ function chatExtensionMaker(): unknown {
   }
 
   chatExtension.prototype.name = CHAT_EXTENSION_NAME;
-  return chatExtension;
+  return chatExtension as unknown as ExtensionConstructor;
 }
 
 export default chatExtensionMaker;

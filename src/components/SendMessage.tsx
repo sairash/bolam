@@ -32,11 +32,11 @@ function DialogUpload() {
         
     }, [acceptedFiles, sendFile, username, setIsUploadOpen])
 
-    const files = acceptedFiles.map(file => (
+    const files = acceptedFiles.map((file, index) => (
         file.type.startsWith('image/') ? (
-            <img className="h-20" src={URL.createObjectURL(file)} alt={file.name} />
+            <img key={file.name + index} className="h-20" src={URL.createObjectURL(file)} alt={file.name} />
         ) : (
-            <div key={file.path}>
+            <div key={file.name + index}>
                 {file.path}- {file.type} - {file.size} bytes
             </div>
         )

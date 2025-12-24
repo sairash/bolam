@@ -4,6 +4,19 @@ import WebTorrent from 'webtorrent'
 import { type Message, type MessageType } from '@/types/message'
 import { deterministicRandomString } from '@/helper/usernameGen'
 
+interface ExtendedWire {
+  peerId: string
+  torrentChat: { send: (payload: string) => void }
+}
+
+interface ExtendedTorrent extends WebTorrent.Torrent {
+  wires: ExtendedWire[]
+}
+
+interface ExtendedInstance extends WebTorrent.Instance {
+  peerId: string
+}
+
 interface PeerState {
   client: WebTorrent.Instance | null
   torrent: WebTorrent.Torrent | null
@@ -54,30 +67,40 @@ export const usePeerStore = create<PeerState>()(
       const { peerId, torrent } = get()
       if (!peerId || !torrent) return
 
-      const message: Message = {
+      const message = {
         id: id,
         type: type,
         content: messageContent,
         peerId: peerId,
         timestamp: Date.now().toString(),
         username: username
-      };
+      } as Message;
 
       const payload = JSON.stringify(message);
 
-      for (const wire of torrent.wires) {
+      const extendedTorrent = torrent as ExtendedTorrent
+      for (const wire of extendedTorrent.wires) {
         wire.torrentChat.send(payload);
       }
 
       get().addMessage(message)
     },
     relayMessage: (message: Message) => {
-      const { torrent } = get()
-      if (!torrent) return
-      const realyMessage: Message = { ...message, type: 'relay', content: message }
+      const { torrent, peerId } = get()
+      if (!torrent || !peerId) return
+      
+      const relayMsg: Message = {
+        type: 'relay',
+        id: crypto.randomUUID(),
+        peerId: peerId,
+        timestamp: Date.now().toString(),
+        username: '',
+        content: message
+      }
 
-      const payload = JSON.stringify(realyMessage);
-      for (const wire of torrent.wires) {
+      const payload = JSON.stringify(relayMsg);
+      const extendedTorrent = torrent as ExtendedTorrent
+      for (const wire of extendedTorrent.wires) {
         wire.torrentChat.send(payload);
       }
     },
@@ -93,7 +116,7 @@ export const usePeerStore = create<PeerState>()(
 
     },
 
-    setClient: (client) => set({ client, peerId: client.peerId }),
+    setClient: (client) => set({ client, peerId: (client as ExtendedInstance).peerId }),
 
     setTorrent: (torrent) => {
       set({ torrent, isConnected: true })
@@ -125,13 +148,15 @@ export const usePeerStore = create<PeerState>()(
     addMessage: async (message: Message) => {
       const { messages, activeUsers, peerId } = get()
 
+      if (message.type === 'relay') {
+        get().addMessage(message.content)
+        return
+      }
+
       if (messages.find(m => m.id === message.id)) return
 
       const randomString = await deterministicRandomString(message.peerId)
       switch (message.type) {
-        case 'relay':
-
-          return;
         case 'update-username':
           activeUsers[message.peerId] = { username: message.username, randomString: randomString }
           set({ activeUsers: { ...activeUsers } })
